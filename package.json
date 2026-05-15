@@ -15,6 +15,51 @@
       "target": ["snap", "AppImage"],
       "icon": "assets/icon.png",
       "category": "Utility"
+    },
+    "snap": {
+      "base": "core22",
+      "grade": "stable",
+      "confinement": "strict",
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+        {
+          "gnome-3-28-1804": {
+            "interface": "content",
+            "target": "$SNAP/legacy-gnome-unused"
+          },
+          "gnome-42-2204": {
+            "interface": "content",
+            "target": "$SNAP/gnome-platform",
+            "default-provider": "gnome-42-2204"
+          },
+          "gtk-3-themes": {
+            "interface": "content",
+            "target": "$SNAP/data-dir/themes",
+            "default-provider": "gtk-common-themes"
+          },
+          "icon-themes": {
+            "interface": "content",
+            "target": "$SNAP/data-dir/icons",
+            "default-provider": "gtk-common-themes"
+          },
+          "sound-themes": {
+            "interface": "content",
+            "target": "$SNAP/data-dir/sounds",
+            "default-provider": "gtk-common-themes"
+          }
+        }
+      ]
     }
   },
   "repository": "https://github.com/xanmoy/notion-desktop.git",
