@@ -13,6 +13,19 @@ electronContextMenu({
 const appUrl = 'https://www.notion.so/login';
 const stateFile = path.join(app.getPath('userData'), 'window-state.json');
 
+const NOTION_HOSTS = new Set(['notion.so', 'www.notion.so', 'notion.site']);
+
+function isNotionUrl(url) {
+    try {
+        const { protocol, hostname } = new URL(url);
+        if (protocol !== 'https:' && protocol !== 'http:') return false;
+        if (NOTION_HOSTS.has(hostname)) return true;
+        return hostname.endsWith('.notion.so') || hostname.endsWith('.notion.site');
+    } catch {
+        return false;
+    }
+}
+
 let window = null;
 
 // Function to get the last saved window state
@@ -55,8 +68,6 @@ const createWindow = () => {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            nativeWindowOpen: true, // Enables proper popup handling
-            preload: path.join(__dirname, 'preload.js'),
             webSecurity: true,
         },
     });
@@ -67,9 +78,18 @@ const createWindow = () => {
     });
 
     window.webContents.setWindowOpenHandler((details) => {
-        return details.url.includes('accounts.google.com')
-            ? (shell.openExternal(details.url), { action: 'deny' }) // Open Google sign-in popups in system browser
-            : { action: 'allow' }; // Allow other popups
+        if (isNotionUrl(details.url)) {
+            return { action: 'allow' };
+        }
+        shell.openExternal(details.url);
+        return { action: 'deny' };
+    });
+
+    window.webContents.on('will-navigate', (event, url) => {
+        if (!isNotionUrl(url)) {
+            event.preventDefault();
+            shell.openExternal(url);
+        }
     });
 
     window.once('ready-to-show', () => {
@@ -116,14 +136,12 @@ if (!appLock) {
 
 // Process arguments for the second instance
 function processArgs(args) {
-    const regHttps = /^https:\/\/www\.notion\.so\/.*/g;
-    const regNotion = /^notion:\/\//g;
     for (const arg of args) {
-        if (regHttps.test(arg)) {
+        if (isNotionUrl(arg)) {
             return arg;
         }
-        if (regNotion.test(arg)) {
-            return appUrl + arg.substring(11);
+        if (arg.startsWith('notion://')) {
+            return appUrl + arg.substring('notion://'.length);
         }
     }
     return null;
